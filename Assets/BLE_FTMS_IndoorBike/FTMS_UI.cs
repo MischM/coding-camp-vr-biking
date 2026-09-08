@@ -1,126 +1,88 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Security.Cryptography;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// Test-Oberfläche aus dem Referenzprojekt - Klassenname, Feldnamen und
+/// Methodennamen sind ABSICHTLICH unverändert, damit die Verdrahtung in
+/// test.unity (Buttons, Slider, InputFields) weiter funktioniert.
+///
+/// Neu: intern läuft alles über ITrainer/BleTrainer statt über die alte
+/// FTMS_IndoorBike-Klasse. Der Slider liefert jetzt direkt PROZENT (-10..+10).
+/// </summary>
 public class FTMS_UI : MonoBehaviour
 {
-    // Start is called before the first frame update
-    private bool connected = false;
-    public FtmsIndoorBike connector;
+    // --- diese Felder sind in der Szene verdrahtet, Namen nicht ändern! ---
     public Text info;
-    public Text resistanceShow;
+    public Text resistance_show;
 
-    public string deviceName = "TUO";
-    public string serviceID = "{00001826-0000-1000-8000-00805f9b34fb}";
-    public string readCharacteristic = "{00002ad2-0000-1000-8000-00805f9b34fb}";
-    public string writeCharacteristic= "{00002ad9-0000-1000-8000-00805f9b34fb}";
-
-    /*
-    public string device_name = "APXPRO 46080";
+    public string device_name = "TUO";
     public string service_id = "{00001826-0000-1000-8000-00805f9b34fb}";
     public string read_characteristic = "{00002ad2-0000-1000-8000-00805f9b34fb}";
-    public string write_characteristic= "{00002ad9-0000-1000-8000-00805f9b34fb}";
-    */
-    void OnEnable()
-    {
-        connector = FtmsIndoorBike.instance;
+    public string write_characteristic = "{00002ad9-0000-1000-8000-00805f9b34fb}";
 
+    [Header("Testen ohne Hardware")]
+    [Tooltip("An = MockTrainer mit Fantasiewerten, kein Bluetooth nötig.")]
+    public bool useMockTrainer = false;
+
+    private ITrainer _trainer;
+    private BleTrainer _ble;
+
+    // =====================================================================
+    public void connect()
+    {
+        if (_trainer != null) return;   // doppeltes Verbinden verhindern
+
+        if (useMockTrainer)
+        {
+            _trainer = gameObject.AddComponent<MockTrainer>();
+            Debug.Log("[UI] MockTrainer aktiv (kein Bluetooth).");
+        }
+        else
+        {
+            _ble = gameObject.AddComponent<BleTrainer>();
+            _ble.deviceName = device_name;
+            _ble.serviceId = service_id;
+            _ble.bikeDataCharacteristic = read_characteristic;
+            _ble.controlPointCharacteristic = write_characteristic;
+            _trainer = _ble;
+            _ble.Connect();
+        }
+
+        _trainer.OnData += OnTrainerData;
     }
 
-    void Update()
+    /// <summary>Wird vom Slider aufgerufen. val ist jetzt STEIGUNG IN PROZENT.</summary>
+    public void write_resistance(float val)
     {
-        if (connected)
-        {
-           // connector.Update();
-            info.text = GenerateOutputText();
-        }
+        if (_trainer == null) return;
+
+        _trainer.SetGrade(val);
+        if (resistance_show != null)
+            resistance_show.text = $"Steigung: {val:F1} %";
     }
 
-    private string GenerateOutputText()
+    private void OnTrainerData(TrainerData d)
     {
-        string output = String.Empty;
-        
-        if (connector.hasSpeed)
-        {
-            output += "Speed: " + connector.speed + "\n";
-        
-        }
-        if (connector.hasAverageSpeed)
-        {
-            output += "Average Speed: " + connector.averageSpeed + "\n";
+        if (info == null) return;
 
-        }
-        if (connector.hasRpm)
-        {
-            output += "RPM: (rev/min): " + connector.rpm + "\n";
-        }
-        if (connector.hasAverageRpm)
-        {
-            output += "Average RPM: " + connector.averageRpm + "\n";
-        }
-        if (connector.hasDistance)
-        {
-            output += "Distance (meter): " + connector.distance + "\n";
-        }
-        if (connector.hasResistance)
-        {
-            output += "Resistance: " + connector.resistance + "\n";
-        }
-        if (connector.hasPower)
-        {
-            output += "Power (Watt): " + connector.power + "\n";
-        }
-        if (connector.hasAveragePower)
-        {
-            output += "AveragePower: " + connector.averagePower + "\n";
-        }
-        if (connector.hasExpendedEnergy)
-        {
-            output += "ExpendedEnergy: " + connector.expendedEnergy + "\n";
-        }
+        string status = _ble != null
+            ? (_ble.IsReady ? "bereit" : "verbinde...") + "  |  CP: " + _ble.LastControlPointResponse
+            : "Mock";
 
-        return output;
+        info.text = $"Speed: {d.SpeedKmh:F1} km/h\n" +
+                    $"Cadence: {d.CadenceRpm:F0} rpm\n" +
+                    $"Power: {d.PowerW:F0} W\n" +
+                    $"Status: {status}";
     }
 
     private void OnApplicationQuit()
     {
-        connector.Quit();
+        if (_ble != null) _ble.Disconnect();
     }
 
-    public void Connect() {
-        if (deviceName.Length > 0 && serviceID.Length > 0 && readCharacteristic.Length > 0 && writeCharacteristic.Length > 0)
-        {
-            StartCoroutine(connector.Connect(deviceName, serviceID, readCharacteristic, writeCharacteristic));
-            connected = true;
-        }
-    }
-
-    public void WriteResistance(float val) {
-        if (connected)
-        {
-            connector.WriteResistance(val);
-            resistanceShow.text = "Resistance: " + Mathf.FloorToInt(val).ToString();
-        }
-    }
-
-    public void ChangeDeviceName(string _deviceName) {
-        deviceName = _deviceName;
-    }
-    public void ChangeServiceID(string _serviceId)
-    {
-        serviceID = _serviceId;
-    }
-    public void SetReadCharacteristics(string _readCharacteristic)
-    {
-        readCharacteristic = _readCharacteristic;
-    }
-    public void SetWriteCharacteristics(string _writeCharacteristic)
-    {
-        writeCharacteristic = _writeCharacteristic;
-    }
+    // --- von den InputFields in der Szene aufgerufen, Namen nicht ändern ---
+    public void change_device_name(string v) => device_name = v;
+    public void change_service_id(string v) => service_id = v;
+    public void change_read_characteristic(string v) => read_characteristic = v;
+    public void change_write_characteristic(string v) => write_characteristic = v;
 }

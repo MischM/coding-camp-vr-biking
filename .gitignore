@@ -103,3 +103,9 @@ Icon?
 .AppleDB
 .AppleDesktop
 .vs
+# nachtraeglich ergaenzt
+[Ll]ogs/
+UserSettings/
+*.slnx
+.vsconfig
+[Mm]emoryCaptures/
