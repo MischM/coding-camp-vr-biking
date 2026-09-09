@@ -21,23 +21,43 @@ public class Trainer : MonoBehaviour
     const string BikeData = "{00002ad2-0000-1000-8000-00805f9b34fb}";  // Notify
     const string Control  = "{00002ad9-0000-1000-8000-00805f9b34fb}";  // Write + Indicate
 
-    // Feste FTMS-Koeffizienten. Spaeter frei ersetzbar.
-    const byte  Crr      = 0x3C;    // Einheit 0.0001  -> 0.006
-    const byte  Cw       = 0x14;    // Einheit 0.01    -> 0.20 kg/m
+    // Crr und Cw sind KEINE Konstanten mehr. Sie kommen jetzt von aussen ueber
+    // SetSimulation() - siehe Bremskraft.cs. Startwerte stehen unten bei den Feldern.
     const float MaxGrade = 0.10f;   // dimensionslos, 0.10 = 10 % (mehr kann der Tuo nicht)
 
     // ---- die vier Dinge ----
     public float Speed   { get; private set; }   // km/h
     public float Cadence { get; private set; }   // rpm
     public float Power   { get; private set; }   // Watt
-    public void SetResistance(float grade) => _wanted = Mathf.Clamp(grade, -MaxGrade, MaxGrade);
+    /// <summary>Nur die Steigung setzen. Crr und Cw bleiben, wie sie sind.</summary>
+    public void SetResistance(float grade) => _wantedG = Mathf.Clamp(grade, -MaxGrade, MaxGrade);
+
+    /// <summary>Steigung, Untergrund und Luftwiderstand in einem Aufruf. Darf jeden
+    /// Frame kommen - gefunkt wird trotzdem hoechstens 1x pro Sekunde.</summary>
+    public void SetSimulation(float grade, float crr, float cw)
+    {
+        _wantedG = Mathf.Clamp(grade, -MaxGrade, MaxGrade);
+        _wantedC = Mathf.Clamp(crr,   0f, 0.0255f);   // Bereich, den ein Byte hergibt
+        _wantedK = Mathf.Clamp(cw,    0f, 2.55f);
+    }
+
+    /// <summary>Steigung, die zuletzt wirklich rausging. Fuer Anzeigen.</summary>
+    public float GesendeteSteigung => _sentG == int.MinValue ? 0f : _sentG / 10000f;
+
+    /// <summary>true, wenn der Tuo am Anschlag ist und mehr nicht liefern kann.</summary>
+    public bool AmAnschlag => Mathf.Abs(_wantedG) >= MaxGrade - 0.0001f;
 
     public bool   IsReady { get; private set; }
     public string Status  { get; private set; } = "nicht verbunden";
 
     string _dev = "", _svc = "";
     bool   _subscribed, _hasData, _hasControl, _busy;
-    float  _wanted, _sent = float.NaN;
+    // Gewuenschte Werte, von aussen gesetzt:
+    float  _wantedG;                 // Steigung, dimensionslos (0.05 = 5 %)
+    float  _wantedC = 0.006f;        // Crr
+    float  _wantedK = 0.20f;         // Cw in kg/m
+    // Was davon zuletzt gefunkt wurde - schon in FTMS-Einheiten, darum int:
+    int    _sentG = int.MinValue, _sentC = -1, _sentK = -1;
     string _lastError;
 
     // =========================================================================
@@ -148,13 +168,32 @@ public class Trainer : MonoBehaviour
         var wait = new WaitForSeconds(1f);
         while (IsReady)
         {
-            if (float.IsNaN(_sent) || Mathf.Abs(_wanted - _sent) > 0.0005f)
+            // Unity-Werte in die Einheiten des Protokolls umrechnen:
+            //   Steigung in 0.01 %  -> dimensionslos * 10000   (0.05  -> 500)
+            //   Crr      in 0.0001  -> 0.006 * 10000 =  60 = 0x3C
+            //   Cw       in 0.01    -> 0.30  * 100   =  30 = 0x1E
+            int g = Mathf.RoundToInt(_wantedG * 10000f);
+            int c = Mathf.Clamp(Mathf.RoundToInt(_wantedC * 10000f), 0, 255);
+            int k = Mathf.Clamp(Mathf.RoundToInt(_wantedK * 100f),   0, 255);
+
+            // Totband von 20 Einheiten = 0.2 % Steigung. Kleineres spuert niemand,
+            // und es filtert das Zittern der Neigungsmessung weg.
+            // WICHTIG: hier muessen ALLE Werte geprueft werden, die mitgesendet
+            // werden. Wer spaeter einen dazunimmt und das hier vergisst, dreht im
+            // Inspector und es passiert nichts - ohne jede Fehlermeldung.
+            bool neu = _sentG == int.MinValue
+                    || Mathf.Abs(g - _sentG) > 20
+                    || c != _sentC
+                    || k != _sentK;
+
+            if (neu)
             {
-                // Opcode 0x11, 7 Bytes, little-endian. Steigung in Einheiten von 0.01 %,
-                // darum dimensionslos * 10000. Wind bleibt 0.
-                short g = (short)Mathf.RoundToInt(_wanted * 10000f);
-                Write(new byte[] { 0x11, 0, 0, (byte)(g & 0xFF), (byte)((g >> 8) & 0xFF), Crr, Cw });
-                _sent = _wanted;
+                // Opcode 0x11, 7 Bytes, little-endian:
+                // [0]=0x11  [1][2]=Wind (bleibt 0)  [3][4]=Steigung  [5]=Crr  [6]=Cw
+                Write(new byte[] { 0x11, 0, 0,
+                    (byte)(g & 0xFF), (byte)((g >> 8) & 0xFF),
+                    (byte)c, (byte)k });
+                _sentG = g; _sentC = c; _sentK = k;
             }
             yield return wait;
         }
