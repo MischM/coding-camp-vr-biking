@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 599e200f82636be4c8b09ae16dee76f0
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 316532
+  packageName: Easy Bike System
+  packageVersion: 2.0.1
+  assetPath: Assets/RayznGames/BicycleSystem/URP/Prefabs/Extras/CameraRig.prefab
+  uploadId: 917260

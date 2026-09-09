@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 4d04fae4e5a2e95d799f0a4da46d373b
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 316532
+  packageName: Easy Bike System
+  packageVersion: 2.0.1
+  assetPath: Assets/RayznGames/BicycleSystem/URP/Prefabs/Extras/Particles/SmokeParticles.prefab
+  uploadId: 917260

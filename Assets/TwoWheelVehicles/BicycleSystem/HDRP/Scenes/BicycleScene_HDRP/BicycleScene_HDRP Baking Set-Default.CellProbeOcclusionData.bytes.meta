@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 53be69c551569d82ab4235adb6cb91f6
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 316532
+  packageName: Easy Bike System
+  packageVersion: 2.0.1
+  assetPath: Assets/RayznGames/BicycleSystem/HDRP/Scenes/BicycleScene_HDRP/BicycleScene_HDRP
+    Baking Set-Default.CellProbeOcclusionData.bytes
+  uploadId: 917260

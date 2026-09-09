@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 6ca152dd3ec4ed6e3ad86734898e023a
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 316532
+  packageName: Easy Bike System
+  packageVersion: 2.0.1
+  assetPath: Assets/RayznGames/BicycleSystem/HDRP/Materials/Motorbike/Piggo_Mat.mat
+  uploadId: 917260

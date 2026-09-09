@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 7204a1c11464cd24d990b6f2ac5a598f
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 316532
+  packageName: Easy Bike System
+  packageVersion: 2.0.1
+  assetPath: Assets/RayznGames/BicycleSystem/URP/Materials/TrailSlip.mat
+  uploadId: 917260

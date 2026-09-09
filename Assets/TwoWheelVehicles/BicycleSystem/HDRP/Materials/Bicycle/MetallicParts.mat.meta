@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 6feab4f89eb3cbc8d8888c8b04461997
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 316532
+  packageName: Easy Bike System
+  packageVersion: 2.0.1
+  assetPath: Assets/RayznGames/BicycleSystem/HDRP/Materials/Bicycle/MetallicParts.mat
+  uploadId: 917260

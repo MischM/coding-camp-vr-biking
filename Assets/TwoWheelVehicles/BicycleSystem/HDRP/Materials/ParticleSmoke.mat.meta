@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: b95393e6f49ce2674aedfca86bb60333
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 316532
+  packageName: Easy Bike System
+  packageVersion: 2.0.1
+  assetPath: Assets/RayznGames/BicycleSystem/HDRP/Materials/ParticleSmoke.mat
+  uploadId: 917260

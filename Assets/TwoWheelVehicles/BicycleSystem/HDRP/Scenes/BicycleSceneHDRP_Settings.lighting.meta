@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: ab5d28d1fe46a75d4a0af4c98ba8c248
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 4890085278179872738
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 316532
+  packageName: Easy Bike System
+  packageVersion: 2.0.1
+  assetPath: Assets/RayznGames/BicycleSystem/HDRP/Scenes/BicycleSceneHDRP_Settings.lighting
+  uploadId: 917260

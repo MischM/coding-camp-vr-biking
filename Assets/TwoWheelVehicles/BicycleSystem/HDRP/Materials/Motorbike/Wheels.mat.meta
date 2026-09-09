@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 414d71ab31484b6e998d754c46dc7f1c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 316532
+  packageName: Easy Bike System
+  packageVersion: 2.0.1
+  assetPath: Assets/RayznGames/BicycleSystem/HDRP/Materials/Motorbike/Wheels.mat
+  uploadId: 917260

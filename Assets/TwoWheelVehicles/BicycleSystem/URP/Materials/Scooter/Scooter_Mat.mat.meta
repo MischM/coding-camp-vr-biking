@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 1b485101d70b9ba51bbc6ee12aeedb11
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 316532
+  packageName: Easy Bike System
+  packageVersion: 2.0.1
+  assetPath: Assets/RayznGames/BicycleSystem/URP/Materials/Scooter/Scooter_Mat.mat
+  uploadId: 917260

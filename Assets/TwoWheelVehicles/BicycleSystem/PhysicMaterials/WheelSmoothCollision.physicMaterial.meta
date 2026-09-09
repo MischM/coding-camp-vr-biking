@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 04886b659315fe249a102a5c387540e9
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 13400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 316532
+  packageName: Easy Bike System
+  packageVersion: 2.0.1
+  assetPath: Assets/RayznGames/BicycleSystem/PhysicMaterials/WheelSmoothCollision.physicMaterial
+  uploadId: 917260

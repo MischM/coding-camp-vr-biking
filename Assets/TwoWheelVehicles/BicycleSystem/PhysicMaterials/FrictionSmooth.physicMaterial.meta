@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d9fac14c66ec628979644f48ce8ca4e0
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 13400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 316532
+  packageName: Easy Bike System
+  packageVersion: 2.0.1
+  assetPath: Assets/RayznGames/BicycleSystem/PhysicMaterials/FrictionSmooth.physicMaterial
+  uploadId: 917260
