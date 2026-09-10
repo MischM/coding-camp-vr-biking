@@ -7,7 +7,7 @@ public class Checkpoint : MonoBehaviour
 {
     [Header("Detection")]
     [Tooltip("Tag used to identify the bicycle/player object.")]
-    [SerializeField] private string playerTag = "Player";
+    [SerializeField] private Bike bike;
 
     [Tooltip("If true, the checkpoint can only be triggered once. Otherwise it resets and can be reused.")]
     [SerializeField] private bool oneTimeUse = true;
@@ -61,7 +61,8 @@ public class Checkpoint : MonoBehaviour
         if (oneTimeUse && hasTriggered)
             return;
 
-        if (!other.CompareTag(playerTag))
+        var b = other.GetComponent<Bike>();
+        if (b == null || b != bike)
             return;
 
         DeliverPizza(other.gameObject);
