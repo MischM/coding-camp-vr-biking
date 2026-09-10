@@ -109,5 +109,4 @@ UserSettings/
 *.slnx
 .vsconfig
 [Mm]emoryCaptures/
-UserSettings/EditorUserSettings.asset
-UserSettings/Layouts/default-6000.dwlt
+UserSettings/
