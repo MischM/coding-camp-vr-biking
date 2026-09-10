@@ -1,13 +1,5 @@
 {
   "dependencies": {
-    "com.tripo3d.unitybridge": {
-      "version": "file:C:/Users/SJF-CodingCamp/Downloads/Tripo3d_Unity_Bridge-latest/Tripo3d_Unity_Bridge",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {
-        "com.unity.modules.jsonserialize": "1.0.0"
-      }
-    },
     "com.unity.ai.navigation": {
       "version": "2.0.14",
       "depth": 0,
@@ -71,6 +63,13 @@
       },
       "url": "https://packages.unity.com"
     },
+    "com.unity.ide.vscode": {
+      "version": "1.2.0",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
     "com.unity.inputsystem": {
       "version": "1.20.0",
       "depth": 0,
@@ -100,6 +99,16 @@
       "depth": 3,
       "source": "registry",
       "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.postprocessing": {
+      "version": "3.5.4",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.modules.imgui": "1.0.0",
+        "com.unity.modules.physics": "1.0.0"
+      },
       "url": "https://packages.unity.com"
     },
     "com.unity.render-pipelines.core": {
@@ -136,14 +145,14 @@
     },
     "com.unity.searcher": {
       "version": "4.9.5",
-      "depth": 2,
+      "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
     "com.unity.shadergraph": {
       "version": "17.3.0",
-      "depth": 1,
+      "depth": 0,
       "source": "builtin",
       "dependencies": {
         "com.unity.render-pipelines.core": "17.3.0",
