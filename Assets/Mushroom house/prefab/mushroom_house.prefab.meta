@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d5c7fd34c77e1684490361e29a48b555
+timeCreated: 1461095668
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 61027
+  packageName: Mushroom house
+  packageVersion: 1.0
+  assetPath: Assets/Mushroom house/prefab/mushroom_house.prefab
+  uploadId: 113733
