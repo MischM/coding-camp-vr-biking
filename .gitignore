@@ -109,4 +109,5 @@ UserSettings/
 *.slnx
 .vsconfig
 [Mm]emoryCaptures/
-UserSettings/
+UserSettings\
+/UserSettings
