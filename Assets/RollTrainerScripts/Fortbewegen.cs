@@ -26,6 +26,38 @@
 // Jump abgeschaltet werden. Gravity schreibt sonst gegen aufBodenSetzen
 // dieselbe Hoehe, Turn gegen Lenken, Move gegen dieses Skript.
 //
+// ---------------------------------------------------------------------------
+// ERGAENZT: "Gruenes bremst" - auf dem Weg bleiben ohne Teleport
+//
+// Wer neben den gemalten Weg geraet, bekommt am Tuo den vollen Widerstand.
+// Treten wird dort so zaeh, dass man von selbst zurueck auf den Weg lenkt.
+//
+// Warum es hier drin steht und nicht in einem eigenen Skript:
+//   - der Raycast weiter unten laeuft ohnehin schon jeden Frame, und sein
+//     Treffer liefert das Terrain gratis mit (hit.collider -> Terrain). Ein
+//     zweites Skript muesste denselben Strahl noch einmal schiessen.
+//   - die Leitung zum Tuo existiert bereits: _b.SetzeNeigung(). Es braucht
+//     also keinen eigenen Draht zum Trainer und keine Execution-Order-Frage,
+//     wer von beiden zuletzt spricht.
+//
+// Wie es wirkt: im Gruenen wird Bremskraft eine absurd steile Steigung
+// gemeldet (gruenSteigungGrad, 60 Grad). Bremskraft rechnet sie wie jede
+// andere um - durch den Verzerrungsteiler, mal Fahrergewicht - und Trainer
+// deckelt bei MaxGrade = 0.10, also 10 Prozent. 60 Grad landen ueber die
+// ganze Bandbreite dieser Regler sicher am Anschlag.
+//
+// Nebenwirkung, bewusst in Kauf genommen: die Anzeige "neigungGrad" zeigt im
+// Gruenen diese Fantasiesteigung statt der echten. Der Wert geht ja auch
+// wirklich so an den Tuo - er ist nicht falsch, nur nicht die Gelaendeneigung.
+// Wer die echte sehen will: neigungRoh daneben zeigt sie unveraendert.
+//
+// Erkannt wird das Gruene an dem, was auf das Terrain GEMALT ist (Alphamap),
+// nicht an Collidern. Malt ihr den Weg weiter, gilt das sofort.
+// ACHTUNG: die Reihenfolge der Layer IM TERRAIN ist nicht die Reihenfolge der
+// Dateien im Projektordner - grasLayer notfalls in der Paint-Texture-Palette
+// des Terrains nachzaehlen, von 0 an.
+// ---------------------------------------------------------------------------
+//
 // NOCH OFFEN: Trainer.Speed behaelt bei einem BLE-Abbruch den zuletzt
 // empfangenen Wert - man faehrt dann endlos weiter. Der Watchdog dafuer gehoert
 // nach Trainer.cs, und die Datei war hier ausdruecklich nicht dran.
@@ -98,6 +130,35 @@ public class Fortbewegen : MonoBehaviour
              "Sendeintervall. Kleiner = ruhiger, aber traeger an Kuppen.")]
     [Range(0.2f, 6f)] public float neigungsGlaettung = 1.5f;
 
+    [Header("Gruenes bremst")]
+    [Tooltip("Im Gruenen den Tuo auf Anschlag drehen. Treten wird dort so zaeh,\n" +
+             "dass man von selbst wieder auf den Weg lenkt - ohne Teleport,\n" +
+             "ohne Blende, ohne dass dem Fahrer die Kontrolle weggenommen wird.\n" +
+             "Genau deshalb ist das die VR-freundlichste Variante: es passiert\n" +
+             "nichts, was der Fahrer nicht selbst ausgeloest hat.")]
+    public bool gruenesBremst = true;
+
+    [Tooltip("Nummer des Gras-Layers im Terrain.\n" +
+             "Reihenfolge wie in der Paint-Texture-Palette des Terrains, ab 0\n" +
+             "gezaehlt - NICHT die Reihenfolge der Dateien im Projektordner.\n" +
+             "Bremst es ueberall oder nirgends, ist hier die falsche Nummer.")]
+    public int grasLayer = 0;
+
+    [Tooltip("Ab welchem Grasanteil gebremst wird.\n" +
+             "0.5 = mehr als die Haelfte unter dem Fahrer ist Gras.\n" +
+             "Am Wegrand gehen die Texturen weich ineinander ueber, das ist\n" +
+             "also kein harter Rand: kleiner = strenger (schon der Randbereich\n" +
+             "bremst), groesser = grosszuegiger.")]
+    [Range(0.05f, 1f)] public float grasSchwelle = 0.5f;
+
+    [Tooltip("Welche Steigung im Gruenen an Bremskraft gemeldet wird, in Grad.\n" +
+             "Bewusst absurd hoch: Bremskraft teilt sie durch den\n" +
+             "Verzerrungsteiler und rechnet das Fahrergewicht ein, und der Tuo\n" +
+             "deckelt ohnehin bei 10 Prozent. 60 Grad landen ueber die ganze\n" +
+             "Bandbreite dieser Regler sicher am Anschlag.\n" +
+             "Kleiner stellen, falls das Gruene weniger hart bremsen soll.")]
+    public float gruenSteigungGrad = 60f;
+
     // ANZEIGEzum Zuschauen
     [Header("Anzeige (nur lesen)")]
     [SerializeField] float tempoKmh;        // was der Tuo meldet, springt im 1-Hz-Takt
@@ -105,6 +166,8 @@ public class Fortbewegen : MonoBehaviour
     [SerializeField] float neigungRoh;      // was der Raycast in diesem Frame sagt
     [SerializeField] float neigungGrad;     // gemittelt, das geht an den Tuo
     [SerializeField] bool  bodenGefunden;   // false = Strahl trifft nichts
+    [SerializeField] float grasAnteil;      // 1 = voll im Gruenen, 0 = auf dem Weg
+    [SerializeField] bool  bremstImGruenen; // true = der Tuo steht am Anschlag
 
     Trainer    _t;
     Bremskraft _b;
@@ -112,6 +175,7 @@ public class Fortbewegen : MonoBehaviour
 
     float _v;
     float _neigung;              // der gemittelte Wert ueber Frames hinweg
+    float _grasNaechste;         // wann der Untergrund neu abgefragt wird
 
     void Awake()
     {
@@ -190,6 +254,12 @@ public class Fortbewegen : MonoBehaviour
             // zufaelligen Ausreisser erwischt
             _neigung = Mathf.Lerp(_neigung, neigungRoh, nk);
 
+            // ---- Gruenes bremst -------------------------------------------
+            // Statt selbst mit dem Trainer zu reden, melden wir Bremskraft eine
+            // Fantasiesteigung. Der Rest des Weges zum Tuo steht schon.
+            bremstImGruenen = gruenesBremst && GrasAnteil(hit) >= grasSchwelle;
+            if (bremstImGruenen) _neigung = gruenSteigungGrad;
+
             // auf oberfläceh setzen
             if (aufBodenSetzen)
             {
@@ -205,6 +275,12 @@ public class Fortbewegen : MonoBehaviour
             bodenGefunden = false;
             neigungRoh = 0f;
 
+            // Kein Boden = kein Gruenes. Ohne diese Zeile bliebe der Anschlag
+            // stehen, sobald der Strahl einmal ins Leere geht - derselbe
+            // Fehler, der weiter oben bei der Neigung schon einmal drinsteckte.
+            bremstImGruenen = false;
+            grasAnteil      = 0f;
+
             // WICHTIG: hier muss die Neigung wirklich zurueckgefahren werden.
             // Frueher passierte in diesem Zweig gar nichts - Bremskraft behielt
             // den letzten Wert und der Tuo bremste ewig weiter, obwohl unter dem
@@ -219,5 +295,39 @@ public class Fortbewegen : MonoBehaviour
         neigungGrad = _neigung;
         tempoKmh    = _t.Speed;
         tempoMs     = _v;
+    }
+
+    /// <summary>Wie viel Gras liegt an der getroffenen Stelle? 0 bis 1.
+    /// Das Terrain kommt aus dem Raycast-Treffer - es braucht also kein Feld im
+    /// Inspector, und ausserhalb eines Terrains bremst automatisch nichts.</summary>
+    float GrasAnteil(RaycastHit treffer)
+    {
+        // Nur 10x pro Sekunde nachsehen. GetAlphamaps legt bei JEDEM Aufruf ein
+        // Array an, und der Tuo funkt ohnehin nur 1x pro Sekunde - jeden Frame
+        // zu fragen waere unnoetiger Muell fuer den Speicher.
+        if (Time.time < _grasNaechste) return grasAnteil;
+        _grasNaechste = Time.time + 0.1f;
+
+        var boden = treffer.collider != null
+                  ? treffer.collider.GetComponent<Terrain>()
+                  : null;
+        if (boden == null) return grasAnteil = 0f;
+
+        TerrainData daten = boden.terrainData;
+        Vector3 p = treffer.point - boden.transform.position;
+
+        // Weltkoordinate in die Rasterkoordinate der Alphamap umrechnen. Die
+        // hat ihre eigene Aufloesung, meist groeber als das Gelaende.
+        int x = Mathf.Clamp(Mathf.RoundToInt(p.x / daten.size.x * (daten.alphamapWidth  - 1)),
+                            0, daten.alphamapWidth  - 1);
+        int z = Mathf.Clamp(Mathf.RoundToInt(p.z / daten.size.z * (daten.alphamapHeight - 1)),
+                            0, daten.alphamapHeight - 1);
+
+        // GetAlphamaps(x, y, ...): x laeuft entlang Welt-X, y entlang Welt-Z.
+        float[,,] gewichte = daten.GetAlphamaps(x, z, 1, 1);
+
+        return grasAnteil = (grasLayer >= 0 && grasLayer < gewichte.GetLength(2))
+                          ? gewichte[0, 0, grasLayer]
+                          : 0f;
     }
 }
