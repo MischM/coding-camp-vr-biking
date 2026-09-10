@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: ee5cc55752bc5d14394e3f61b2e12eed
+timeCreated: 1461094929
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 61027
+  packageName: Mushroom house
+  packageVersion: 1.0
+  assetPath: Assets/Mushroom house/Materials/mushroom_house.mat
+  uploadId: 113733

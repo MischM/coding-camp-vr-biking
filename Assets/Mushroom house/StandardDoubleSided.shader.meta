@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 0afc4afff48685a40864501bfcaabd5b
+timeCreated: 1461095508
+licenseType: Store
+ShaderImporter:
+  defaultTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 61027
+  packageName: Mushroom house
+  packageVersion: 1.0
+  assetPath: Assets/Mushroom house/StandardDoubleSided.shader
+  uploadId: 113733
