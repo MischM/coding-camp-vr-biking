@@ -37,7 +37,7 @@ public class Bremskraft : MonoBehaviour
              "Bei 1 ist bei 5.7 Grad Schluss (Maximum des Tuo), bei 2 erst bei 11.3 Grad.\n" +
              "Hier steckt auch die unbekannte Masse-Einstellung des Tuo mit drin - " +
              "einfach so lange drehen, bis es sich richtig anfühlt.")]
-    [Range(1f, 3f)] public float verzerrungsTeiler = 2f;
+    [Range(1f, 8f)] public float verzerrungsTeiler = 2f;
 
     [Tooltip("Rollwiderstand, dimensionslos.\n" +
              "0.004 Asphalt / 0.006 rauer Belag / 0.008 Schotter / 0.02 Wiese.\n" +
