@@ -59,8 +59,8 @@ public class Fortbewegen : MonoBehaviour
         // ¨ziel_velocity
         float ziel = _t.Speed / 3.6f;
 
-        // gltten, gegen ruckartiges speed verschieben
-        _v = Mathf.Lerp(_v, ziel, Time.deltaTime * glaettung);
+        // glätten, gegen ruckartiges speed verschieben
+        _v = Mathf.Lerp(_v, ziel, Time.deltaTime * glaettung); //time.deltatime ist dauer des letzten frames
 
         // vooorwäärts
         transform.position += transform.forward * _v * Time.deltaTime;
