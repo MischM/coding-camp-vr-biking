@@ -255,9 +255,9 @@ namespace rayzngames
 		}
 		private void UpdateHandles()
 		{
-			float currentY = handle.localEulerAngles.y;
-			float delta = Mathf.DeltaAngle(currentY, currentSteeringAngle);
-			handle.Rotate(Vector3.up, delta, Space.Self);
+			//float currentY = handle.localEulerAngles.y;
+			//float delta = Mathf.DeltaAngle(currentY, currentSteeringAngle);
+			//handle.Rotate(Vector3.up, delta, Space.Self); 
 		}
 
 		private void LeanOnTurnLocal()
