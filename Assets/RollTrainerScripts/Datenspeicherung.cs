@@ -9,7 +9,14 @@ using UnityEngine;
 
 /// <summary>
 /// Misst die Durchschnittsgeschwindigkeit einer Fahrt und speichert sie beim
-/// Druck auf "Beenden" als Textdatei im Ordner Assets/RollTrainerScripts.
+/// Druck auf "Beenden" als CSV im Ordner Assets/RollTrainerScripts.
+///
+/// GEAENDERT: schreibt CSV statt Text, und standardmaessig ALLE Fahrten als
+/// Zeilen in EINE Datei. Genau dafuer ist CSV da - eine Tabelle mit einer
+/// einzigen Zeile pro Datei koennte man auch als Text speichern. So kann man
+/// die Datei in Excel oder Numbers oeffnen und die Fahrten des ganzen Camps
+/// nebeneinander sehen, sortieren und ein Diagramm daraus machen.
+/// Wer lieber pro Fahrt eine eigene Datei will: Haekchen unten wegnehmen.
 ///
 /// Ablauf:
 ///  1. Die Messung startet von selbst, sobald der Tuo ein Tempo ueber 0 meldet.
@@ -48,9 +55,22 @@ public class Datenspeicherung : MonoBehaviour
              "winzige Restwerte, und die wuerden die Uhr weiterlaufen lassen.")]
     public float startAbKmh = 0.5f;
 
-    [Tooltip("Anfang des Dateinamens. Datum und Uhrzeit haengt das Skript an,\n" +
-             "damit keine Fahrt eine aeltere ueberschreibt.")]
-    public string dateiName = "Fahrt";
+    [Tooltip("Name der Datei, ohne Endung.\n" +
+             "Bei einer eigenen Datei pro Fahrt haengt das Skript Datum und\n" +
+             "Uhrzeit an, damit keine Fahrt eine aeltere ueberschreibt.")]
+    public string dateiName = "Fahrten";
+
+    [Tooltip("Alle Fahrten als Zeilen in EINE CSV schreiben.\n" +
+             "Angehakt: eine Tabelle, die mit jeder Fahrt eine Zeile laenger\n" +
+             "wird - in Excel sofort auswertbar und vergleichbar.\n" +
+             "Weg: pro Fahrt eine eigene Datei mit Datum im Namen.")]
+    public bool alleFahrtenInEineDatei = true;
+
+    [Tooltip("Kommas statt Punkte als Dezimaltrennzeichen.\n" +
+             "Deutsche und Schweizer Excel-Versionen erwarten das Komma -\n" +
+             "sonst landen 12.4 km/h als Text in der Zelle und man kann nicht\n" +
+             "damit rechnen. Fuer englische Versionen wegnehmen.")]
+    public bool dezimalKomma = true;
 
     [Tooltip("Zeigt den Beenden-Knopf im Spiel an (unter der Trainer-Anzeige).\n" +
              "Wegnehmen, wenn der Knopf spaeter aus dem VR-Menue kommen soll -\n" +
@@ -63,20 +83,28 @@ public class Datenspeicherung : MonoBehaviour
     [SerializeField] float streckeMeter;          // daraus wird der Schnitt
     [SerializeField] float durchschnittKmh;       // Strecke geteilt durch Fahrzeit
     [SerializeField] float hoechstesTempoKmh;
+    [SerializeField] float tempoMultiplikator = 1f;   // Massstab, mit dem diese Fahrt lief
     [SerializeField] string letzteDatei = "-";
 
-    Trainer _t;
-    float   _naechsteSuche;   // drosselt die Suche nach dem Trainer
+    Trainer     _t;
+    Fortbewegen _f;           // nur um den Tempo-Multiplikator abzulesen
+    float       _naechsteSuche;   // drosselt die Suche nach beiden
+    bool        _multiErfasst;    // true = Multiplikator dieser Fahrt steht fest
 
     void Update()
     {
         // Der Trainer legt sich zum Teil erst beim Play an. Darum hier nachfassen
         // statt in Start() - aber gedrosselt, die Suche geht durch die ganze Szene.
-        if (_t == null)
+        if (_t == null || _f == null)
         {
-            if (Time.time < _naechsteSuche) return;
-            _naechsteSuche = Time.time + 0.5f;
-            _t = FindFirstObjectByType<Trainer>();
+            if (Time.time >= _naechsteSuche)
+            {
+                _naechsteSuche = Time.time + 0.5f;
+                if (_t == null) _t = FindFirstObjectByType<Trainer>();
+                if (_f == null) _f = FindFirstObjectByType<Fortbewegen>();
+            }
+            // Ohne Trainer gibt es nichts zu messen. Ohne Fortbewegen schon -
+            // dann wird der Multiplikator einfach als 1 notiert.
             if (_t == null) return;
         }
 
@@ -85,6 +113,15 @@ public class Datenspeicherung : MonoBehaviour
         // Steht das Rad, passiert gar nichts: keine Zeit, keine Strecke.
         faehrtGerade = tempoKmh > startAbKmh;
         if (!faehrtGerade) return;
+
+        // Beim ERSTEN Meter festhalten, mit welchem Massstab gefahren wird.
+        // Bewusst nicht laufend nachlesen: wer waehrend der Fahrt am Regler
+        // dreht, soll die schon gefahrenen Meter nicht rueckwirkend umdeuten.
+        if (!_multiErfasst)
+        {
+            _multiErfasst = true;
+            tempoMultiplikator = _f != null ? _f.tempoMultiplikator : 1f;
+        }
 
         // Zeit und Strecke aufaddieren. Tempo durch 3.6 macht aus km/h m/s,
         // mal der Dauer dieses Frames ergibt die Meter dieses Frames.
@@ -115,20 +152,40 @@ public class Datenspeicherung : MonoBehaviour
         string ordner = Path.Combine(Application.dataPath, "RollTrainerScripts");
         if (!Directory.Exists(ordner)) ordner = Application.persistentDataPath;
 
-        string datei = Path.Combine(
-            ordner, dateiName + "_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".txt");
+        DateTime jetzt = DateTime.Now;
 
-        string text =
-            "Fahrt vom " + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "\n" +
-            "-----------------------------------\n" +
-            "Durchschnitt     " + durchschnittKmh.ToString("F1")   + " km/h\n" +
-            "Hoechstes Tempo  " + hoechstesTempoKmh.ToString("F1") + " km/h\n" +
-            "Fahrzeit         " + fahrzeitSekunden.ToString("F0")  + " s\n" +
-            "Strecke          " + streckeMeter.ToString("F0")      + " m\n";
+        string datei = alleFahrtenInEineDatei
+            ? Path.Combine(ordner, dateiName + ".csv")
+            : Path.Combine(ordner, dateiName + "_" + jetzt.ToString("yyyy-MM-dd_HH-mm-ss") + ".csv");
 
-        File.WriteAllText(datei, text);
+        // Semikolon statt Komma: deutsche und schweizer Excel-Versionen
+        // erwarten das so, und mit Dezimalkommas waere ein Komma als Trenner
+        // ohnehin zweideutig. Die Zeile "sep=;" ganz oben sagt Excel dasselbe
+        // noch einmal ausdruecklich - andere Programme ueberlesen sie.
+        bool neueDatei = !File.Exists(datei);
+
+        string kopf = "sep=;\n" +
+                      "Datum;Uhrzeit;Durchschnitt_kmh;Hoechstes_Tempo_kmh;" +
+                      "Fahrzeit_s;Strecke_m;Tempo_Multiplikator\n";
+
+        string zeile = string.Join(";", new[]
+        {
+            jetzt.ToString("yyyy-MM-dd"),
+            jetzt.ToString("HH:mm:ss"),
+            Zahl(durchschnittKmh,   1),
+            Zahl(hoechstesTempoKmh, 1),
+            Zahl(fahrzeitSekunden,  0),
+            Zahl(streckeMeter,      0),
+            Zahl(tempoMultiplikator, 2)
+        }) + "\n";
+
+        // Anhaengen statt Ueberschreiben - so waechst die Tabelle mit jeder
+        // Fahrt. Bei einer eigenen Datei pro Fahrt ist sie ohnehin immer neu.
+        if (neueDatei) File.WriteAllText(datei, kopf + zeile);
+        else           File.AppendAllText(datei, zeile);
+
         letzteDatei = datei;
-        Debug.Log("[Datenspeicherung] Gespeichert: " + datei + "\n" + text);
+        Debug.Log("[Datenspeicherung] Gespeichert: " + datei + "\n" + zeile);
 
 #if UNITY_EDITOR
         // Damit die neue Datei sofort im Project-Fenster auftaucht.
@@ -140,6 +197,19 @@ public class Datenspeicherung : MonoBehaviour
         streckeMeter      = 0f;
         durchschnittKmh   = 0f;
         hoechstesTempoKmh = 0f;
+
+        // Damit die naechste Fahrt den dann eingestellten Massstab erwischt.
+        _multiErfasst = false;
+    }
+
+    /// <summary>Zahl fuer die CSV formatieren. Immer mit fester Nachkommastelle
+    /// und unabhaengig davon, auf welche Sprache der Rechner steht - sonst
+    /// schreibt derselbe Code auf zwei Laptops zwei verschiedene Dateien.</summary>
+    string Zahl(float wert, int nachkomma)
+    {
+        string s = wert.ToString("F" + nachkomma,
+                                 System.Globalization.CultureInfo.InvariantCulture);
+        return dezimalKomma ? s.Replace('.', ',') : s;
     }
 
     void OnGUI()

@@ -82,6 +82,18 @@ public class Fortbewegen : MonoBehaviour
              "Kleiner = traeger und glatter, groesser = direkter und ruckliger.")]
     [Range(0.5f, 6f)] public float glaettung = 2f;
 
+    [Tooltip("Multipliziert das Tempo, das der Tuo meldet.\n" +
+             "1 = massstabsgetreu, 2 = doppelt so schnell unterwegs.\n" +
+             "Wozu: die Karte ist groesser, als man sie in einer Camp-Runde\n" +
+             "abfahren kann - mit 2 oder 3 kommt man in vernuenftiger Zeit\n" +
+             "zum Zielhaus, ohne dass am Trainer mehr getreten werden muss.\n" +
+             "ACHTUNG in VR: je hoeher, desto staerker der Widerspruch zwischen\n" +
+             "dem, was das Auge sieht, und dem, was der Koerper spuert. Ueber 3\n" +
+             "wird es fuer empfindliche Leute unangenehm - lieber niedrig\n" +
+             "anfangen und hochtasten.\n" +
+             "0 = man bleibt stehen, praktisch zum Testen der Lenkung.")]
+    [Range(0f, 5f)] public float tempoMultiplikator = 1f;
+
     [Tooltip("Die Kamera des Fahrers (Main Camera im XR Rig).\n" +
              "Leer lassen: wird unter diesem Objekt automatisch gesucht.\n" +
              "Wozu: der Boden wird UNTER DEM FAHRER abgetastet, nicht unter dem\n" +
@@ -211,8 +223,8 @@ public class Fortbewegen : MonoBehaviour
         }
         if (_t == null) return;
 
-        // ¨ziel_velocity
-        float ziel = _t.Speed / 3.6f;
+        // ¨ziel_velocity  (km/h -> m/s, dann der Massstab aus dem Inspector)
+        float ziel = _t.Speed / 3.6f * tempoMultiplikator;
 
         // glätten, gegen ruckartiges speed verschieben.
         // 1 - e^(-k*dt) statt k*dt, damit die Einstellung bei 60, 90 und 120 fps
