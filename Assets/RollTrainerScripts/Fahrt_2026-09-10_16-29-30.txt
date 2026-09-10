@@ -1,0 +1,6 @@
+Fahrt vom 10.09.2026 16:29:30
+-----------------------------------
+Durchschnitt     12.8 km/h
+Hoechstes Tempo  20.7 km/h
+Fahrzeit         145 s
+Strecke          514 m
