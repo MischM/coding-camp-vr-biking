@@ -226,7 +226,7 @@ public class Lenken : MonoBehaviour
         // 1 - e^(-k*dt) statt einfach k*dt: nur so ist die Glaettung von der
         // Bildrate unabhaengig. Sonst fuehlt sich dieselbe Einstellung im Editor
         // (60 fps) anders an als im Headset (90 oder 120 fps).
-        _winkel = roh;// Mathf.Lerp(_winkel, roh, 1f - Mathf.Exp(-glaettung * Time.deltaTime));
+        _winkel = roh;//  Mathf.Lerp(_winkel, roh, 1f - Mathf.Exp(-glaettung * Time.deltaTime));
         lenkwinkel = roh;
 
         // ---- 6. Totzone ------------------------------------------------------
