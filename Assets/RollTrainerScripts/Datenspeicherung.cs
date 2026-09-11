@@ -84,12 +84,15 @@ public class Datenspeicherung : MonoBehaviour
     [SerializeField] float durchschnittKmh;       // Strecke geteilt durch Fahrzeit
     [SerializeField] float hoechstesTempoKmh;
     [SerializeField] float tempoMultiplikator = 1f;   // Massstab, mit dem diese Fahrt lief
+    [SerializeField] float streckeImSpielMeter;       // Strecke mal Massstab
+    [SerializeField] float durchschnittWatt;          // ueber die Fahrzeit gemittelt
     [SerializeField] string letzteDatei = "-";
 
     Trainer     _t;
     Fortbewegen _f;           // nur um den Tempo-Multiplikator abzulesen
     float       _naechsteSuche;   // drosselt die Suche nach beiden
     bool        _multiErfasst;    // true = Multiplikator dieser Fahrt steht fest
+    float       _wattSekunden;    // aufsummierte Leistung, geteilt ergibt den Schnitt
 
     void Update()
     {
@@ -130,9 +133,20 @@ public class Datenspeicherung : MonoBehaviour
 
         if (tempoKmh > hoechstesTempoKmh) hoechstesTempoKmh = tempoKmh;
 
+        // Leistung ueber die Zeit aufsummieren (Wattsekunden), nicht die
+        // einzelnen Messwerte mitteln: der Tuo meldet nur etwa 1x pro Sekunde,
+        // und die Frames sind unterschiedlich lang. Wer stattdessen alle
+        // Messwerte addiert und durch ihre Anzahl teilt, gewichtet einen
+        // kurzen Frame genauso stark wie einen langen.
+        _wattSekunden += _t.Power * Time.deltaTime;
+
         // Strecke geteilt durch Zeit IST der Durchschnitt - man muss keine
         // einzelnen Messwerte sammeln und am Ende mitteln.
-        durchschnittKmh = (streckeMeter / fahrzeitSekunden) * 3.6f;
+        durchschnittKmh    = (streckeMeter / fahrzeitSekunden) * 3.6f;
+        durchschnittWatt   = _wattSekunden / fahrzeitSekunden;
+
+        // Im Spiel zurueckgelegt: die getretene Strecke mal dem Massstab.
+        streckeImSpielMeter = streckeMeter * tempoMultiplikator;
     }
 
     /// <summary>Fahrt beenden: Daten in eine Datei schreiben und alles auf 0
@@ -166,7 +180,8 @@ public class Datenspeicherung : MonoBehaviour
 
         string kopf = "sep=;\n" +
                       "Datum;Uhrzeit;Durchschnitt_kmh;Hoechstes_Tempo_kmh;" +
-                      "Fahrzeit_s;Strecke_m;Tempo_Multiplikator\n";
+                      "Fahrzeit_s;Strecke_getreten_m;Strecke_im_Spiel_m;" +
+                      "Tempo_Multiplikator;Durchschnitt_Watt\n";
 
         string zeile = string.Join(";", new[]
         {
@@ -175,8 +190,10 @@ public class Datenspeicherung : MonoBehaviour
             Zahl(durchschnittKmh,   1),
             Zahl(hoechstesTempoKmh, 1),
             Zahl(fahrzeitSekunden,  0),
-            Zahl(streckeMeter,      0),
-            Zahl(tempoMultiplikator, 2)
+            Zahl(streckeMeter,        0),
+            Zahl(streckeImSpielMeter, 0),
+            Zahl(tempoMultiplikator,  2),
+            Zahl(durchschnittWatt,    0)
         }) + "\n";
 
         // Anhaengen statt Ueberschreiben - so waechst die Tabelle mit jeder
@@ -193,10 +210,13 @@ public class Datenspeicherung : MonoBehaviour
 #endif
 
         // Alles zurueck auf Anfang fuer die naechste Fahrt.
-        fahrzeitSekunden  = 0f;
-        streckeMeter      = 0f;
-        durchschnittKmh   = 0f;
-        hoechstesTempoKmh = 0f;
+        fahrzeitSekunden    = 0f;
+        streckeMeter        = 0f;
+        streckeImSpielMeter = 0f;
+        durchschnittKmh     = 0f;
+        hoechstesTempoKmh   = 0f;
+        durchschnittWatt    = 0f;
+        _wattSekunden       = 0f;
 
         // Damit die naechste Fahrt den dann eingestellten Massstab erwischt.
         _multiErfasst = false;
@@ -222,6 +242,7 @@ public class Datenspeicherung : MonoBehaviour
         GUILayout.Label(faehrtGerade ? "Aufzeichnung laeuft" : "wartet auf Bewegung");
         GUILayout.Label("Durchschnitt  " + durchschnittKmh.ToString("F1") + " km/h");
         GUILayout.Label("Fahrzeit      " + fahrzeitSekunden.ToString("F0") + " s");
+        GUILayout.Label("Leistung      " + durchschnittWatt.ToString("F0") + " W");
 
         if (GUILayout.Button("Beenden und speichern", GUILayout.Height(28))) Beenden();
 
